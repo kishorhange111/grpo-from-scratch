@@ -8,6 +8,12 @@ on multi-step arithmetic. The reward is exact match, with no reward model and no
 network. The trainer checkpoints adapters, optimiser and RNG, so a run continues across
 GPU sessions that are reclaimed after about 40 minutes.
 
+It is the pretrained-LLM counterpart of
+[rlvr-grpo-from-scratch](https://github.com/kishorhange111/rlvr-grpo-from-scratch), which
+compares GRPO, Dr. GRPO, RLOO and online DPO across seeds on a tiny character-level GPT on
+a CPU. Here the same objectives act on a real instruction-tuned model, through adapters,
+with batched generation on a GPU.
+
 ## Objective ([`rl.py`](src/grpo/rl.py))
 
 Each problem gets G sampled completions. A completion's advantage is its reward relative
