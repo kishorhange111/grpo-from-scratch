@@ -102,10 +102,11 @@ Training reward (mean over 64 samples per step, T = 1), averaged over windows of
   within the ±1.6-point standard error for 500 problems). Dr. GRPO climbs faster in the
   first 20 steps of training reward. With one seed each, this does not establish that it
   learns faster in general.
-- **Response length doesn't grow.** Both runs stay between about 110 and 127 tokens, and
-  correct and wrong answers have similar lengths. The length bias that Dr. GRPO removes did
+- **Response length doesn't grow.** The mean per step stays between 99 and 147 tokens in
+  both runs (110–127 averaged over the windows above), and correct and wrong answers have
+  similar lengths. The length bias that Dr. GRPO removes did
   not show up as runaway length on this short task.
-- **Clipping almost never fires.** The clip fraction stays below 0.5% throughout, so with
+- **Clipping almost never fires.** The clip fraction is at most 0.5% on any step, so with
   μ = 2 and lr = 5e-5 the update is effectively REINFORCE with a group baseline.
 - **Dr. GRPO is 19% cheaper per step** (16.8 s against 20.8 s), because dropping the KL
   term removes the reference forward pass.
