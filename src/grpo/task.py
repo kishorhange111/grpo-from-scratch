@@ -2,8 +2,9 @@
 
 Problems are like ``(47 + 18) * 6 - 39``, generated from a seed, so the train and eval
 sets are reproducible and disjoint. The model must end its reply with
-``<answer>N</answer>``. Reward is 1 when N equals the true value and 0 otherwise. Whether
-the format was followed is logged but never rewarded, so any gain comes from correctness.
+``<answer>N</answer>``. Reward is 1 when N equals the true value and 0 otherwise. There is
+no separate format reward, but an answer outside the tags scores 0, so the format is
+rewarded implicitly.
 """
 
 from __future__ import annotations
