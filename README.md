@@ -54,7 +54,8 @@ There are 10, on CPU, using a tiny random Qwen2. They check:
 ## Experiment ([`train.py`](src/grpo/train.py))
 
 The task ([`task.py`](src/grpo/task.py)) uses problems like `(47 + 18) * 6 - 39 = ?`, and
-the answer must appear in `<answer></answer>`. Format is logged but never rewarded. Each
+the answer must appear in `<answer></answer>`. There is no separate format reward, but an
+untagged answer scores 0, so the format is learned through the correctness reward. Each
 step draws 8 problems × 8 samples at T = 1 (no top-k, top-p or repetition penalty, so the
 sampler *is* the policy). Greedy accuracy on 500 held-out problems is measured every 50
 steps. The script logs reward, response length (correct vs wrong), clip fraction and
@@ -66,4 +67,46 @@ python -m grpo.train --run grpo --out results          # GPU, resumable
 python -m grpo.train --run dr   --out results
 ```
 
-**Results are pending** from the Colab runs.
+## Results (Colab T4, one seed per run, one 34-minute session each)
+
+The per-step logs are in [`results/grpo/history.jsonl`](results/grpo/history.jsonl) and
+[`results/dr/history.jsonl`](results/dr/history.jsonl). Each run got one GPU session, so
+GRPO reached step 92 and Dr. GRPO, which is cheaper per step, reached step 111. Neither
+reached the planned 200.
+
+Greedy accuracy on the 500 held-out problems:
+
+| step | GRPO | Dr. GRPO |
+|---|---|---|
+| 0 (base model) | 0.0% | 0.0% |
+| 50 | **84.8%** | **83.6%** |
+| 100 | – | 84.8% |
+
+Training reward (mean over 64 samples per step, T = 1), averaged over windows of steps:
+
+| steps | GRPO | Dr. GRPO |
+|---|---|---|
+| 0–9 | 0.009 | 0.141 |
+| 10–19 | 0.350 | 0.623 |
+| 20–29 | 0.658 | 0.723 |
+| 30–49 | 0.723 | 0.789 |
+| 50–69 | 0.723 | 0.787 |
+| 70–91 | 0.748 | 0.791 |
+
+- **The base model scores 0%** because greedy decoding never emits the `<answer>` tag
+  within 200 tokens (format 0.0). Almost all of the jump to about 85% is therefore the
+  model learning to finish with a tagged answer, which the correctness reward teaches
+  implicitly. Format reaches 100% by step 50 in both runs. The gain is not mostly new
+  arithmetic ability.
+- **At step 50 the two objectives are tied** on held-out accuracy (84.8% against 83.6%,
+  within the ±1.6-point standard error for 500 problems). Dr. GRPO climbs faster in the
+  first 20 steps of training reward. With one seed each, this does not establish that it
+  learns faster in general.
+- **Response length doesn't grow.** The mean per step stays between 99 and 147 tokens in
+  both runs (110–127 averaged over the windows above), and correct and wrong answers have
+  similar lengths. The length bias that Dr. GRPO removes did
+  not show up as runaway length on this short task.
+- **Clipping almost never fires.** The clip fraction is at most 0.5% on any step, so with
+  μ = 2 and lr = 5e-5 the update is effectively REINFORCE with a group baseline.
+- **Dr. GRPO is 19% cheaper per step** (16.8 s against 20.8 s), because dropping the KL
+  term removes the reference forward pass.
